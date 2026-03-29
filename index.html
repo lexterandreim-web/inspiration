@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TikTok Analytics Replica</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f7f7f7;
+      color: #111;
+    }
+
+    .app {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 76px;
+      background: #fff;
+      border-right: 1px solid #e8e8e8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px 0;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .side-btn,
+    .side-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      color: #666;
+    }
+
+    .side-btn {
+      background: #ff2d55;
+      color: #fff;
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .divider {
+      width: 24px;
+      height: 1px;
+      background: #e5e5e5;
+      margin: 6px 0;
+    }
+
+    .side-icon.active {
+      border: 1px solid #ddd;
+      background: #f4f4f4;
+      color: #111;
+    }
+
+    .main {
+      flex: 1;
+      padding: 0;
+    }
+
+    .topbar {
+      height: 72px;
+      background: #fff;
+      border-bottom: 1px solid #e8e8e8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 28px 0 34px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 24px;
+      height: 100%;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .tab {
+      color: #888;
+      cursor: default;
+      padding-top: 3px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      position: relative;
+      font-weight: 500;
+    }
+
+    .tab.active {
+      color: #111;
+      font-weight: 700;
+    }
+
+    .tab.active::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 3px;
+      background: #111;
+      border-radius: 3px 3px 0 0;
+    }
+
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      color: #7a6a54;
+      font-weight: 600;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f6d7a, #d9a441);
+      border: 2px solid #e5e5e5;
+    }
+
+    .content {
+      padding: 30px 32px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e7e7e7;
+      border-radius: 10px;
+      box-shadow: 0 0 0 rgba(0,0,0,0);
+    }
+
+    .post-card {
+      padding: 18px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .post-left {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .thumb {
+      width: 44px;
+      height: 58px;
+      background: #000;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .post-title {
+      font-size: 30px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .post-date {
+      color: #848484;
+      font-size: 22px;
+    }
+
+    .post-stats {
+      display: flex;
+      gap: 44px;
+      align-items: center;
+      color: #8e8e8e;
+      text-align: center;
+      font-size: 16px;
+      padding-right: 8px;
+    }
+
+    .stat-item .icon {
+      font-size: 28px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .overview-grid {
+      margin-bottom: 22px;
+      overflow: hidden;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      border-bottom: 1px solid #ececec;
+    }
+
+    .metric {
+      min-height: 92px;
+      border-right: 1px solid #ececec;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 14px 8px;
+    }
+
+    .metric:last-child { border-right: 0; }
+    .metric.active { box-shadow: inset 0 4px 0 #1e76d0; }
+
+    .metric-label {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 25px;
+      color: #111;
+    }
+
+    .metric.active .metric-value { color: #1e76d0; }
+
+    .chart-wrap {
+      padding: 10px 18px 18px;
+      height: 292px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .panel {
+      min-height: 510px;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 18px 18px;
+      border-bottom: 1px solid #ededed;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    .retention-note {
+      font-size: 16px;
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+
+    .video-placeholder {
+      width: 158px;
+      height: 280px;
+      background: #000;
+      border-radius: 8px;
+      margin: 10px auto 20px;
+      position: relative;
+    }
+
+    .video-placeholder::after {
+      content: "▶";
+      position: absolute;
+      color: #fff;
+      font-size: 34px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.9;
+    }
+
+    .retention-chart-wrap {
+      height: 130px;
+    }
+
+    .traffic-row {
+      margin-bottom: 20px;
+    }
+
+    .traffic-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .traffic-bar {
+      width: 100%;
+      height: 10px;
+      background: #ededed;
+      border-radius: 0;
+      overflow: hidden;
+    }
+
+    .traffic-fill {
+      height: 100%;
+      background: #1e76d0;
+    }
+
+    .search-box {
+      margin-top: 16px;
+      min-height: 120px;
+      border-top: 1px solid #f0f0f0;
+      padding: 18px;
+      color: #444;
+      font-weight: 700;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    @media (max-width: 1100px) {
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .two-col { grid-template-columns: 1fr; }
+      .post-title { font-size: 20px; }
+      .post-date { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">♪</div>
+      <div class="side-btn">+</div>
+      <div class="divider"></div>
+      <div class="side-icon">⌂</div>
+      <div class="side-icon">📋</div>
+      <div class="side-icon active">🖼</div>
+      <div class="side-icon">💬</div>
+      <div class="divider"></div>
+      <div class="side-icon">💡</div>
+      <div class="side-icon">💲</div>
+      <div class="side-icon">👜</div>
+      <div class="side-icon">🎵</div>
+      <div style="flex:1"></div>
+      <div class="side-icon">✉</div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="tabs">
+          <div class="tab active">Overview</div>
+          <div class="tab">Viewers</div>
+          <div class="tab">Engagement</div>
+        </div>
+        <div class="top-right">
+          <div>Updated in real time.</div>
+          <div class="avatar"></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <section class="card post-card">
+          <div class="post-left">
+            <div class="thumb"></div>
+            <div>
+              <div class="post-title">try this game Humanornot.so it's very fun #Humanornot #Foryou #fyp</div>
+              <div class="post-date">Posted on 3/28/2026</div>
+            </div>
+          </div>
+          <div class="post-stats">
+            <div class="stat-item"><span class="icon">▶</span>1,259</div>
+            <div class="stat-item"><span class="icon">❤</span>10</div>
+            <div class="stat-item"><span class="icon">💬</span>0</div>
+            <div class="stat-item"><span class="icon">↗</span>0</div>
+            <div class="stat-item"><span class="icon">🔖</span>0</div>
+          </div>
+        </section>
+
+        <section class="card overview-grid">
+          <div class="metrics">
+            <div class="metric active">
+              <div class="metric-label">Video views</div>
+              <div class="metric-value">1.3K</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Total play time</div>
+              <div class="metric-value">0h:10m:36s</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Average watch time</div>
+              <div class="metric-value">1.72s</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Watched full video</div>
+              <div class="metric-value">0%</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">New followers</div>
+              <div class="metric-value">0</div>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="viewsChart" width="1100" height="280"></canvas>
+          </div>
+        </section>
+
+        <section class="two-col">
+          <div class="card panel">
+            <div class="panel-header">Retention rate ⓘ</div>
+            <div class="panel-body">
+              <div class="retention-note">Most viewers stopped watching at 0:02. Play the video below to see when they lost interest.</div>
+              <div class="video-placeholder"></div>
+              <div class="retention-chart-wrap">
+                <canvas id="retentionChart" width="620" height="120"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card panel" style="min-height: 390px; margin-bottom: 12px;">
+              <div class="panel-header">Traffic source ⓘ</div>
+              <div class="panel-body">
+                <div class="traffic-row">
+                  <div class="traffic-top"><span>Personal profile</span><strong>77.2%</strong></div>
+                  <div class="traffic-bar"><div class="traffic-fill" style="width:77.2%"></div></div>
+                </div>
+                <div class="traffic-row">
+                  <div class="traffic-top"><span>For You</span><strong>22.3%</strong></div>
+                  <div class="traffic-bar"><div class="traffic-fill" style="width:22.3%"></div></div>
+                </div>
+                <div class="traffic-row">
+                  <div class="traffic-top"><span>Other</span><strong>0.5%</strong></div>
+                  <div class="traffic-bar"><div class="traffic-fill" style="width:0.5%"></div></div>
+                </div>
+                <div class="traffic-row">
+                  <div class="traffic-top"><span>Following</span><strong>&lt;0.1%</strong></div>
+                  <div class="traffic-bar"><div class="traffic-fill" style="width:0.08%"></div></div>
+                </div>
+                <div class="traffic-row">
+                  <div class="traffic-top"><span>Direct messages</span><strong>&lt;0.1%</strong></div>
+                  <div class="traffic-bar"><div class="traffic-fill" style="width:0.08%"></div></div>
+                </div>
+                <div class="traffic-row" style="margin-bottom: 0;">
+                  <div class="traffic-top"><span>Sound</span><strong>&lt;0.1%</strong></div>
+                  <div class="traffic-bar"><div class="traffic-fill" style="width:0.08%"></div></div>
+                </div>
+                <div class="traffic-row" style="margin-top: 20px; margin-bottom: 0;">
+                  <div class="traffic-top"><span>Search</span><strong>&lt;0.1%</strong></div>
+                  <div class="traffic-bar"><div class="traffic-fill" style="width:0.08%"></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="card search-box">Search queries ⓘ</div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function drawViewsChart() {
+      const canvas = document.getElementById('viewsChart');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      const pad = { top: 20, right: 56, bottom: 36, left: 12 };
+      const chartW = w - pad.left - pad.right;
+      const chartH = h - pad.top - pad.bottom;
+
+      const data = [3, 18, 12, 12, 17, 10, 7, 8, 4, 2, 1, 1, 1, 1, 1, 8, 2, 1, 1, 1, 1, 1, 1, 1, 1, 255, 1, 1, 1];
+      const labels = Array.from({ length: 29 }, (_, i) => i + 'h');
+      const maxY = 300;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.font = '12px Arial';
+      ctx.fillStyle = '#7c7c7c';
+      ctx.strokeStyle = '#d9d9d9';
+      ctx.lineWidth = 1;
+
+      [0, 100, 200, 300].forEach((v) => {
+        const y = pad.top + chartH - (v / maxY) * chartH;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(pad.left + chartW, y);
+        ctx.stroke();
+        if (v !== 0) ctx.fillText(v, pad.left + chartW + 12, y + 4);
+      });
+
+      ctx.strokeStyle = '#1e76d0';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      data.forEach((v, i) => {
+        const x = pad.left + (i / (data.length - 1)) * chartW;
+        const y = pad.top + chartH - (v / maxY) * chartH;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#1e76d0';
+      data.forEach((v, i) => {
+        const x = pad.left + (i / (data.length - 1)) * chartW;
+        const y = pad.top + chartH - (v / maxY) * chartH;
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      ctx.fillStyle = '#7c7c7c';
+      ctx.strokeStyle = '#aaa';
+      labels.forEach((label, i) => {
+        const x = pad.left + (i / (labels.length - 1)) * chartW;
+        const y = pad.top + chartH;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y + 5);
+        ctx.stroke();
+        ctx.fillText(label, x - 8, h - 12);
+      });
+    }
+
+    function drawRetentionChart() {
+      const canvas = document.getElementById('retentionChart');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      const pad = { top: 10, right: 48, bottom: 26, left: 8 };
+      const chartW = w - pad.left - pad.right;
+      const chartH = h - pad.top - pad.bottom;
+      const data = [90, 50, 48, 47, 46, 46, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45];
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.font = '12px Arial';
+      ctx.strokeStyle = '#d9d9d9';
+      ctx.lineWidth = 1;
+      [50, 100].forEach((v) => {
+        const y = pad.top + chartH - (v / 100) * chartH;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(pad.left + chartW, y);
+        ctx.stroke();
+        ctx.fillStyle = '#7c7c7c';
+        ctx.fillText(v + '%', pad.left + chartW + 8, y + 4);
+      });
+
+      ctx.strokeStyle = '#1e76d0';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      data.forEach((v, i) => {
+        const x = pad.left + (i / (data.length - 1)) * chartW;
+        const y = pad.top + chartH - (v / 100) * chartH;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      ctx.strokeStyle = '#bfbfbf';
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top + chartH);
+      ctx.lineTo(pad.left + chartW, pad.top + chartH);
+      ctx.stroke();
+
+      ctx.fillStyle = '#7c7c7c';
+      ctx.fillText('0:00 (100%)', pad.left, h - 4);
+      ctx.fillText('1:00', pad.left + chartW - 24, h - 4);
+
+      ctx.strokeStyle = '#d0d0d0';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(pad.left + 6, h - 18);
+      ctx.lineTo(pad.left + chartW - 6, h - 18);
+      ctx.stroke();
+
+      ctx.fillStyle = '#f2f2f2';
+      ctx.strokeStyle = '#c6c6c6';
+      ctx.beginPath();
+      ctx.arc(pad.left + 6, h - 18, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    drawViewsChart();
+    drawRetentionChart();
+    window.addEventListener('resize', () => {
+      drawViewsChart();
+      drawRetentionChart();
+    });
+  </script>
+</body>
+</html>
